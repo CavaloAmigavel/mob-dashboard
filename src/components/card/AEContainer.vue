@@ -19,19 +19,26 @@ export default {
   name: "AEContainer",
   props: {
     ae: {
-      type: String, // Assuming ae is a string, adjust the type if it's different
-      required: true, // Make the prop required if it's essential for the component
+      type: String,
+      required: true,
     },
+  },
+  data() {
+    return {
+      con: null,
+    };
   },
   computed: {
     ae_ri() {
       return this.ae.split("/")[1];
     },
+    conArray() {
+      return this.con["m2m:uril"].map((uri) => uri.split("/").pop());
+    },
   },
 
   methods: {
-    /*     
-    fetchAE() {
+    fetchCON() {
       const options = {
         method: "GET",
         headers: {
@@ -40,15 +47,16 @@ export default {
           "X-M2M-RVI": "3",
         },
       };
-      fetch(`/acme${process.env.VUE_APP_ACME_CSE}?fu=1&ty=2`, options)
+      fetch(`/acme${this.ae}?fu=1&ty=3`, options)
         .then((response) => response.json())
-        .then((response) => console.log(response))
+        .then((response) => {
+          this.con = response;
+        })
         .catch((err) => console.error(err));
     },
-     */
   },
   mounted() {
-    //this.fetchAE();
+    this.fetchCON();
   },
 };
 </script>
