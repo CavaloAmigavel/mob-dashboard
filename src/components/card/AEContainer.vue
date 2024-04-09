@@ -15,11 +15,14 @@
 </template>
 
 <script>
-import "bootstrap/dist/css/bootstrap.css";
-
 export default {
-  name: "container",
-  props: [container],
+  name: "AEContainer",
+  props: {
+    ae: {
+      type: String, // Assuming ae is a string, adjust the type if it's different
+      required: true, // Make the prop required if it's essential for the component
+    },
+  },
   methods: {
     /*     
     fetchAE() {
