@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid p-5 bg-success text-white text-center">
-    <h1>Monkey</h1>
-    <p>Monkey wants to connect.</p>
+    <h1>ACME Monitor</h1>
+    <p>Showing what is Connected</p>
   </div>
 
   <div class="container-fluid d-flex mt-5 justify-content-center">
