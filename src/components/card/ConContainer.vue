@@ -1,25 +1,27 @@
 <template>
-  <div class="container-fluid d-flex m-2">
-    <div class="card" style="width: 200px">
-      <div class="card-body">
-        <h4 class="card-title">{{ ae_ri }}</h4>
-      </div>
+  <div class="card text-center" style="width: 200px">
+    <div class="card-body">
+      <h4 class="card-title">{{ ae_ri }}</h4>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "AEContainer",
+  name: "ConContainer",
   props: {
     ae: {
+      type: String,
+      required: true,
+    },
+    con: {
       type: String,
       required: true,
     },
   },
   data() {
     return {
-      cons: null,
+      cins: null,
     };
   },
   computed: {
@@ -33,7 +35,7 @@ export default {
   },
 
   methods: {
-    fetchCON() {
+    fetchCIN() {
       const options = {
         method: "GET",
         headers: {
@@ -52,7 +54,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchCON();
+    //this.fetchCIN();
   },
 };
 </script>

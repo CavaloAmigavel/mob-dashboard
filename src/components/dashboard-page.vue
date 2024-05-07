@@ -3,14 +3,10 @@
     <h1>ACME Monitor</h1>
     <p>Showing what is Connected</p>
   </div>
-
-  <div class="container-fluid d-flex mt-5 justify-content-center">
-    <AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
-  </div>
+  <AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
 </template>
 
 <script>
-import "bootstrap/dist/css/bootstrap.css";
 import AEContainer from "./card/AEContainer.vue"; // Import the AeContainer component
 
 export default {
