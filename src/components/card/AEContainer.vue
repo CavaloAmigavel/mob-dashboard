@@ -8,6 +8,7 @@
 						v-for="(con, index) in conArray"
 						:key="index"
 						:con="con"
+						:ae="ae"
 					/>
 				</div>
 			</div>
