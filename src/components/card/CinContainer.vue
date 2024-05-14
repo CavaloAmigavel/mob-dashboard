@@ -1,24 +1,28 @@
 <template>
-	<div class="card text-center" style="width: 200px">
-		<div class="card-body">
-			<h6 class="card-title">{{ cin }}</h6>
-		</div>
-	</div>
+  <div class="card text-center" style="width: 200px">
+    <div class="card-body">
+      <h6 class="card-title">{{ cinValue }}</h6>
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
-	name: "CinContainer",
-	props: {
-		ae: {
-			type: String,
-			required: true,
-		},
-		cin: {
-			type: String,
-			required: true,
-		},
-	},
-	mounted() {},
+  name: "CinContainer",
+  props: {
+    ae: {
+      type: String,
+      required: true,
+    },
+    cin: {
+      type: Object,
+      required: true,
+    },
+  },
+  computed: {
+    cinValue() {
+      return this.cin["m2m:cin"].con;
+    },
+  },
 };
 </script>
