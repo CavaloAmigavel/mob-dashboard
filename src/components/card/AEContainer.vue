@@ -1,17 +1,13 @@
 <template>
-	<div class="container-fluid d-flex m-2">
-		<div class="card" style="width: 300px">
-			<div class="card-body">
-				<h4 class="card-title">{{ ae_ri }}</h4>
-				<div v-if="cons">
-					<ConContainer
-						v-for="(con, index) in conArray"
-						:key="index"
-						:con="con"
-						:ae="ae"
-					/>
-				</div>
-			</div>
+	<div class="card-body">
+		<h4 class="card-title">{{ ae_ri }}</h4>
+		<div v-if="cons">
+			<ConContainer
+				v-for="(con, index) in conArray"
+				:key="index"
+				:con="con"
+				:ae="ae"
+			/>
 		</div>
 	</div>
 </template>

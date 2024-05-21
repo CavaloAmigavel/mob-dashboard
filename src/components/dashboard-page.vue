@@ -1,5 +1,5 @@
 <template>
-	<div class="container-fluid p-5 bg-success text-white text-center">
+	<div id="grad" class="container-fluid p-5 text-white text-center">
 		<h1>ACME Monitor</h1>
 		<p>Showing what is Connected</p>
 	</div>
@@ -20,7 +20,15 @@
 		</div>
 	</div>
 
-	<AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
+	<div class="container mt-4">
+		<div class="row gx-4 gy-4">
+			<div class="col-12 col-sm-6 col-md-4 col-lg-3">
+				<div class="card h-100">
+					<AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -75,3 +83,29 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+#grad {
+	background: linear-gradient(to right, #00b16a, #009358);
+}
+
+.card {
+	display: block;
+	margin-bottom: 20px;
+	line-height: 1.42857143;
+	background-color: #fff;
+	border-radius: 10px;
+	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+	transition: box-shadow 0.25s;
+}
+
+.card:hover {
+	box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.card-title {
+	margin-top: 0px;
+	font-weight: 700;
+	font-size: 1.4em;
+}
+</style>
