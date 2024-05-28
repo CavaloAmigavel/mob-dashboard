@@ -4,7 +4,7 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       "/acme": {
-        target: "http://m2m.boxdev.site/",
+        target: process.env.VUE_APP_ACME_URL,
         changeOrigin: true,
         pathRewrite: { "^/acme": "" },
       },
