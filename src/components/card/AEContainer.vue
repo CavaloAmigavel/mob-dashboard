@@ -1,13 +1,15 @@
 <template>
-	<div class="card-body">
-		<h4 class="card-title">{{ ae_ri }}</h4>
-		<div v-if="cons">
-			<ConContainer
-				v-for="(con, index) in conArray"
-				:key="index"
-				:con="con"
-				:ae="ae"
-			/>
+	<div class="card w-100">
+		<div class="card-body">
+			<h4 class="card-title">{{ ae_ri }}</h4>
+			<div v-if="cons">
+				<ConContainer
+					v-for="(con, index) in conArray"
+					:key="index"
+					:con="con"
+					:ae="ae"
+				/>
+			</div>
 		</div>
 	</div>
 </template>

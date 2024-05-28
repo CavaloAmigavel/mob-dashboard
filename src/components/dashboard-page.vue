@@ -10,10 +10,23 @@
 				v-for="(card, index) in cards"
 				:key="index"
 			>
-				<div class="card h-100">
+				<div class="card w-100">
 					<div class="card-body">
 						<h5 class="card-title">{{ card.title }}</h5>
 						<p class="card-text">{{ card.content }}</p>
+						<div
+							class="card text-center bg-light"
+							style="width: 268px; margin-bottom: 10px"
+						>
+							<div class="card-body">
+								<h5 class="card-title">{{ con }}</h5>
+								<div class="card text-center" style="width: 232px">
+									<div class="card-body">
+										<h6 class="card-title">{{ cinValue }}</h6>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -23,9 +36,7 @@
 	<div class="container mt-4">
 		<div class="row gx-4 gy-4">
 			<div class="col-12 col-sm-6 col-md-4 col-lg-3">
-				<div class="card h-100">
-					<AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
-				</div>
+				<AEContainer v-for="(ae, index) in aesArray" :key="index" :ae="ae" />
 			</div>
 		</div>
 	</div>
