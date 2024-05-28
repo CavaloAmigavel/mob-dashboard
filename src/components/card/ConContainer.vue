@@ -1,37 +1,40 @@
 <template>
-  <div class="card text-center" style="width: 200px">
-    <div class="card-body">
-      <h5 class="card-title">{{ con }}</h5>
-      <div v-if="cin">
-        <CinContainer :key="index" :cin="cin" :ae="ae" />
-      </div>
-    </div>
-  </div>
+	<div
+		class="card text-center bg-light"
+		style="width: 268px; margin-bottom: 10px"
+	>
+		<div class="card-body">
+			<h5 class="card-title">{{ con }}</h5>
+			<div v-if="cin">
+				<CinContainer :key="index" :cin="cin" :ae="ae" />
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>
 import CinContainer from "./CinContainer.vue";
 export default {
-  name: "ConContainer",
-  components: {
-    CinContainer,
-  },
-  props: {
-    ae: {
-      type: String,
-      required: true,
-    },
-    con: {
-      type: String,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      cin: null,
-    };
-  },
-  computed: {},
+	name: "ConContainer",
+	components: {
+		CinContainer,
+	},
+	props: {
+		ae: {
+			type: String,
+			required: true,
+		},
+		con: {
+			type: String,
+			required: true,
+		},
+	},
+	data() {
+		return {
+			cin: null,
+		};
+	},
+	computed: {},
 
   methods: {
     fetchCIN() {
