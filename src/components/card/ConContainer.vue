@@ -46,8 +46,12 @@ export default {
       fetch(`/acme${this.ae}/${this.con}/la?fu=1&ty=4`, options)
         .then((response) => response.json())
         .then((response) => {
-          console.log("cins", response);
-          this.cin = response;
+          if (response["m2m:cin"] !== undefined) {
+            this.cin = response;
+          } else {
+            console.log(this.ae, "/", this.con);
+            console.log(response);
+          }
         })
         .catch((err) => {
           console.log(this.ae, "/", this.con);
