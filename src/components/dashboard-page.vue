@@ -1,6 +1,6 @@
 <template>
 	<div id="grad" class="container-fluid p-5 text-white text-center">
-		<h1>ACME Monitor</h1>
+		<h1>Smart Display</h1>
 		<p>Showing what is Connected</p>
 	</div>
 
@@ -28,14 +28,6 @@ export default {
 	data() {
 		return {
 			aes: null,
-			cards: [
-				{ title: "Card 1", content: "Some content for card 1." },
-				{ title: "Card 2", content: "Some content for card 2." },
-				{ title: "Card 3", content: "Some content for card 3." },
-				{ title: "Card 4", content: "Some content for card 4." },
-				{ title: "Card 5", content: "Some content for card 5." },
-				// Add more cards as needed
-			],
 		};
 	},
 	computed: {
@@ -93,5 +85,9 @@ export default {
 	margin-top: 0px;
 	font-weight: 700;
 	font-size: 1.4em;
+}
+
+h1 {
+	font-family: "Brush Script MT", cursive;
 }
 </style>
