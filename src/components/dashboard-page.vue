@@ -19,6 +19,10 @@
 
 <script>
 import AEContainer from "./card/AEContainer.vue"; // Import the AeContainer component
+import { useCounterStore } from "@/stores/store";
+
+// Get the store
+const store = useCounterStore();
 
 export default {
 	components: {
