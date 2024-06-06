@@ -18,6 +18,7 @@ _wsServer = None
 _wsServerTask = None
 _wsServerThread = None
 
+connected_clients = {}
 
 
 ##vai buscar o ip da interface de rede certa (podia-se alterar o /etc/hosts mas meh! assim tb da)
@@ -161,78 +162,52 @@ def getALLSubElementsJSON(jsn, name):
 
 # This class implements the handler that reseives the requests
 class HTTPNotificationHandler(BaseHTTPRequestHandler):
-	def get_ip():
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
-		local_ip_address = s.getsockname()[0]
-		return local_ip_address
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header('X-M2M-RSC', '2000')
+        ri = self.headers['X-M2M-RI']
+        self.send_header('X-M2M-RI', ri)
+        self.end_headers()
 
-	# Handle incoming notifications (POST requests)
-	def do_POST(self):
-			# Construct return header
-			self.send_response(200)
-			self.send_header('X-M2M-RSC', '2000')
-			ri = self.headers['X-M2M-RI']
-			self.send_header('X-M2M-RI', ri)
-			self.end_headers()
+        length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(length)
+        if _isEnabled:
+            threading.Thread(target=self._handleJSON, args=(post_data, get_ip())).start()
 
-			# Get headers and content data
-			length = int(self.headers['Content-Length'])
-			contentType = self.headers['Content-Type']
-			post_data = self.rfile.read(length)
-			#print("post data:",post_data)
-			#print(self.headers['X-M2M-RI'])
-			if _isEnabled:
-				# Handle notification in the background when enabled
-				threading.Thread(target=self._handleJSON, args=(post_data, get_ip())).start()
-			
+    def log_message(self, format, *args):
+        return
 
-	# Catch and ignore all log messages
-	def log_message(self, format, *args):
-		return
+    def _handleJSON(self, data, host):
+        jsn = json.loads(data.decode('utf-8'))
+        print("json", jsn)
+        nev = getALLSubElementsJSON(jsn, 'nev')
+        if len(nev) > 0:
+            cin = nev[0].get('rep', {}).get('m2m:cin', {})
+            if cin:
+                print("#1", host)
+                asyncio.run(self.sendToWebSocket(cin, host))
+        vrq = getALLSubElementsJSON(jsn, 'vrq')
+        if len(vrq) == 0:
+            vrq = getALLSubElementsJSON(jsn, 'm2m:vrq')
+        if len(vrq) > 0 and vrq[0] == True:
+            return
+        sur = getALLSubElementsJSON(jsn, 'sur')
+        if len(sur) == 0:
+            sur = getALLSubElementsJSON(jsn, 'm2m:sur')
+        if len(sur) > 0:
+            sur = sur[0]
+        else:
+            return
 
-	# Handle JSON notifications 
-	def _handleJSON(self, data, host):
-		jsn =  json.loads(data.decode('utf-8'))
-		print("json", jsn)
-		nev= getALLSubElementsJSON(jsn, 'nev')
-		if len(nev) > 0:
-			cin = nev[0].get('rep', {}).get('m2m:cin', {})
-			if cin:
-				#print("[CIN]", cin)
-				# Check if WebSocket server is running and send data
-				print("#1",host)
-				asyncio.run(self.sendToWebSocket(cin, host))
-		#check verification request
-		vrq = getALLSubElementsJSON(jsn, 'vrq')
-		if len(vrq) == 0:										# TODO remove later when om2m corrects this
-			vrq = getALLSubElementsJSON(jsn, 'm2m:vrq')
-		if len(vrq) > 0 and vrq[0] == True:
-			return 	# do nothing
+    async def sendToWebSocket(self, data, host, channel="m2m"):
+        global connected_clients
+        if channel in connected_clients:
+            for client in connected_clients[channel]:
+                await client.send(json.dumps(data))
+            print("Sent m2m:cin data to WebSocket clients")
+        else:
+            print("No clients connected to channel:", channel)
 
-		#get the sur first
-		sur = getALLSubElementsJSON(jsn, 'sur')
-		if len(sur) == 0:										# TODO remove later when om2m corrects this
-			sur = getALLSubElementsJSON(jsn, 'm2m:sur')
-		if len(sur) > 0:
-			sur = sur[0]
-		else:
-			return 	# must have a subscription ID
-		
-	async def sendToWebSocket(self, data, host, channel="m2m"):
-		global _wsServerTask, _wsPort
-		if _wsServerTask and not _wsServerTask.done():
-			try:
-				async with websockets.connect(f'ws://{host}:{_wsPort}') as websocket:
-					message = {"action": "publish", "channel": channel, "data": data}
-					await websocket.send(json.dumps(message))
-					print("Sent m2m:cin data to WebSocket server")
-			except Exception as e:
-				print(f"Error sending data to WebSocket server: {e}")
-		else:
-			print("WebSocket server is not running")
-		
-		
 # WebSocket setup function
 def setupWebSocket(local_ip, port=8088):
     global _wsServer, _wsServerTask, _wsServerThread
@@ -240,9 +215,26 @@ def setupWebSocket(local_ip, port=8088):
         return
 
     async def websocketHandler(websocket, path):
-        async for message in websocket:
-            print(f"Received message: {message}")
-            await websocket.send(f"Echo: {message}")
+        global connected_clients
+        try:
+            async for message in websocket:
+                message_data = json.loads(message)
+                action = message_data.get("action")
+                channel = message_data.get("channel")
+
+                if action == "subscribe" and channel:
+                    if channel not in connected_clients:
+                        connected_clients[channel] = []
+                    connected_clients[channel].append(websocket)
+                    print(f"Client subscribed to channel: {channel}")
+                elif action == "publish" and channel:
+                    data = message_data.get("data")
+                    if channel in connected_clients:
+                        for client in connected_clients[channel]:
+                            await client.send(json.dumps(data))
+                        print(f"Published data to channel: {channel}")
+        except websockets.ConnectionClosed:
+            print("Client disconnected")
 
     async def startServer():
         async with websockets.serve(websocketHandler, local_ip, port):
@@ -265,7 +257,6 @@ def shutdownWebSocketServer():
         print("WebSocket server shut down")
 
 if __name__ == '__main__':
-
     local_ip = get_ip()
     print("Notification server running on ip {}".format(local_ip))    
     setupWebSocket(local_ip, _wsPort)
@@ -281,4 +272,3 @@ if __name__ == '__main__':
         Zeroconf.close()
         shutdownWebSocketServer()
         shutdownNotifications()
-  
