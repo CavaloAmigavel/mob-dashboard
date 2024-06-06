@@ -2,6 +2,8 @@ from zeroconf import IPVersion, ServiceInfo, Zeroconf
 import requests, socket, json, atexit, threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from time import sleep
+import asyncio
+import websockets
 
 _isEnabled = False
 _host = None
@@ -10,6 +12,11 @@ _notificationURI = None
 _name = None
 _portCSE = 8000
 _portNoti = 3000
+
+_wsPort = 8088
+_wsServer = None
+_wsServerTask = None
+_wsServerThread = None
 
 
 
@@ -154,6 +161,11 @@ def getALLSubElementsJSON(jsn, name):
 
 # This class implements the handler that reseives the requests
 class HTTPNotificationHandler(BaseHTTPRequestHandler):
+	def get_ip():
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+		local_ip_address = s.getsockname()[0]
+		return local_ip_address
 
 	# Handle incoming notifications (POST requests)
 	def do_POST(self):
@@ -168,23 +180,29 @@ class HTTPNotificationHandler(BaseHTTPRequestHandler):
 			length = int(self.headers['Content-Length'])
 			contentType = self.headers['Content-Type']
 			post_data = self.rfile.read(length)
-			print(post_data)
+			#print("post data:",post_data)
 			#print(self.headers['X-M2M-RI'])
 			if _isEnabled:
 				# Handle notification in the background when enabled
-				threading.Thread(target=self._handleJSON(post_data), args=(post_data)).start()
+				threading.Thread(target=self._handleJSON, args=(post_data, get_ip())).start()
 			
 
 	# Catch and ignore all log messages
 	def log_message(self, format, *args):
 		return
 
-
 	# Handle JSON notifications 
-	def _handleJSON(self, data):
+	def _handleJSON(self, data, host):
 		jsn =  json.loads(data.decode('utf-8'))
 		print("json", jsn)
-
+		nev= getALLSubElementsJSON(jsn, 'nev')
+		if len(nev) > 0:
+			cin = nev[0].get('rep', {}).get('m2m:cin', {})
+			if cin:
+				#print("[CIN]", cin)
+				# Check if WebSocket server is running and send data
+				print("#1",host)
+				asyncio.run(self.sendToWebSocket(cin, host))
 		#check verification request
 		vrq = getALLSubElementsJSON(jsn, 'vrq')
 		if len(vrq) == 0:										# TODO remove later when om2m corrects this
@@ -200,27 +218,57 @@ class HTTPNotificationHandler(BaseHTTPRequestHandler):
 			sur = sur[0]
 		else:
 			return 	# must have a subscription ID
+		
+	async def sendToWebSocket(self, data, host, channel="m2m"):
+		global _wsServerTask, _wsPort
+		if _wsServerTask and not _wsServerTask.done():
+			try:
+				async with websockets.connect(f'ws://{host}:{_wsPort}') as websocket:
+					message = {"action": "publish", "channel": channel, "data": data}
+					await websocket.send(json.dumps(message))
+					print("Sent m2m:cin data to WebSocket server")
+			except Exception as e:
+				print(f"Error sending data to WebSocket server: {e}")
+		else:
+			print("WebSocket server is not running")
+		
+		
+# WebSocket setup function
+def setupWebSocket(local_ip, port=8088):
+    global _wsServer, _wsServerTask, _wsServerThread
+    if _wsServer:
+        return
 
-		# get resource
-		#rep = getALLSubElementsJSON(jsn, 'rep')
-		#if len(rep) == 0:										# TODO remove later when om2m corrects this
-		#	rep = getALLSubElementsJSON(jsn, 'm2m:rep')
-		#if len(rep) > 0:
-		#	jsn = rep[0]
-		#	type = getALLSubElementsJSON(jsn, 'ty')
-		#	if type and len(type) > 0:
-		#		result = getALLSubElementsJSON(jsn, 'm2m:cin')
-		#		if len(result) > 0:
-		#			status = result[0]['con']
-		#			if status == "OFF":
-		#				print("A luz {} foi desligada!".format(_name))
-		#			else:
-		#				print("A luz {} foi ligada!".format(_name))
+    async def websocketHandler(websocket, path):
+        async for message in websocket:
+            print(f"Received message: {message}")
+            await websocket.send(f"Echo: {message}")
+
+    async def startServer():
+        async with websockets.serve(websocketHandler, local_ip, port):
+            await asyncio.Future()  # Run forever
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    _wsServerTask = loop.create_task(startServer())
+    _wsServerThread = threading.Thread(target=loop.run_forever)
+    _wsServerThread.start()
+    print(f"WebSocket server running on {local_ip}:{port}")
+
+def shutdownWebSocketServer():
+    global _wsServerTask, _wsServerThread
+    if _wsServerTask and _wsServerThread:
+        _wsServerTask.cancel()
+        _wsServerThread.join()
+        _wsServerTask = None
+        _wsServerThread = None
+        print("WebSocket server shut down")
 
 if __name__ == '__main__':
 
     local_ip = get_ip()
     print("Notification server running on ip {}".format(local_ip))    
+    setupWebSocket(local_ip, _wsPort)
     setupNotifications(None, local_ip, _portNoti, 0)
     try:
         while True:
@@ -229,7 +277,8 @@ if __name__ == '__main__':
         pass
     finally:
         print("Unregistering...")
-        zeroconf.unregister_service(info)
-        zeroconf.close()
+        Zeroconf.unregister_service(info)
+        Zeroconf.close()
+        shutdownWebSocketServer()
         shutdownNotifications()
   
