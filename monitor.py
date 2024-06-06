@@ -162,21 +162,29 @@ def getALLSubElementsJSON(jsn, name):
 
 # This class implements the handler that reseives the requests
 class HTTPNotificationHandler(BaseHTTPRequestHandler):
+    # Handle incoming notifications (POST requests)
     def do_POST(self):
+        # Construct return header
         self.send_response(200)
         self.send_header('X-M2M-RSC', '2000')
         ri = self.headers['X-M2M-RI']
         self.send_header('X-M2M-RI', ri)
         self.end_headers()
 
+        # Get headers and content data
         length = int(self.headers['Content-Length'])
+        contentType = self.headers['Content-Type']
         post_data = self.rfile.read(length)
+        #print("post data:",post_data)
+        #print(self.headers['X-M2M-RI'])
         if _isEnabled:
             threading.Thread(target=self._handleJSON, args=(post_data, get_ip())).start()
 
+    # Catch and ignore all log messages
     def log_message(self, format, *args):
         return
 
+	# Handle JSON notifications 
     def _handleJSON(self, data, host):
         jsn = json.loads(data.decode('utf-8'))
         print("json", jsn)
@@ -184,7 +192,8 @@ class HTTPNotificationHandler(BaseHTTPRequestHandler):
         if len(nev) > 0:
             cin = nev[0].get('rep', {}).get('m2m:cin', {})
             if cin:
-                print("#1", host)
+                #print("[CIN]", cin)
+				# Check if WebSocket server is running and send data
                 asyncio.run(self.sendToWebSocket(cin, host))
         vrq = getALLSubElementsJSON(jsn, 'vrq')
         if len(vrq) == 0:
