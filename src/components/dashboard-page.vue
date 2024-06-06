@@ -19,6 +19,7 @@
 
 <script>
 import AEContainer from "./card/AEContainer.vue"; // Import the AeContainer component
+import { useMessageStore } from "../stores/messageStore";
 
 export default {
   components: {
@@ -36,8 +37,6 @@ export default {
         { title: "Card 5", content: "Some content for card 5." },
         // Add more cards as needed
       ],
-      messageToSend: "Hello World",
-      receivedMessages: [], // Store received messages
     };
   },
   computed: {
@@ -76,8 +75,14 @@ export default {
       };
 
       this.ws.onmessage = (event) => {
-        const message = event;
-        console.log("mess", message);
+        try {
+          const message = JSON.parse(event.data);
+          console.log("message", message);
+          const messageStore = useMessageStore();
+          messageStore.addMessage(message);
+        } catch (error) {
+          console.error("Failed to parse WebSocket message", error);
+        }
       };
 
       this.ws.onclose = () => {
@@ -92,17 +97,6 @@ export default {
       const message = { action: "subscribe", channel: channel };
       this.ws.send(JSON.stringify(message));
       console.log(`Subscribed to channel: ${channel}`);
-    },
-    sendMessageToServer() {
-      if (this.messageToSend.trim() !== "") {
-        const message = {
-          action: "publish",
-          channel: "m2m",
-          data: this.messageToSend,
-        };
-        this.ws.send(JSON.stringify(message));
-        this.messageToSend = ""; // Clear the input after sending
-      }
     },
   },
   mounted() {

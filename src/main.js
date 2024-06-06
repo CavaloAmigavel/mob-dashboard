@@ -4,6 +4,5 @@ import { createPinia } from "pinia";
 import DashboardPage from "./components/dashboard-page.vue";
 
 const app = createApp(DashboardPage);
-const pinia = createPinia();
-app.use(pinia);
+app.use(createPinia());
 app.mount("#app");
