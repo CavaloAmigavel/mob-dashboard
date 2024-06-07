@@ -1,8 +1,10 @@
 <template>
-  <div id="grad" class="container-fluid p-5 text-white text-center">
-    <h1>ACME Monitor</h1>
-    <p>Showing what is Connected</p>
-  </div>
+
+	<div id="grad" class="container-fluid p-5 text-white text-center">
+		<h1>Smart Display</h1>
+		<p>Showing what is Connected</p>
+	</div>
+
 
   <div class="container mt-4">
     <div class="row gx-4 gy-4">
@@ -108,6 +110,7 @@ export default {
       this.ws.close();
     }
   },
+
 };
 </script>
 
@@ -134,5 +137,9 @@ export default {
   margin-top: 0px;
   font-weight: 700;
   font-size: 1.4em;
+}
+
+h1 {
+	font-family: "Brush Script MT", cursive;
 }
 </style>
