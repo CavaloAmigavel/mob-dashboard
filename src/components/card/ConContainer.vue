@@ -37,12 +37,14 @@ export default {
   },
   data() {
     return {
+      info: null,
       cin: null,
     };
   },
   computed: {
     piValue() {
-      return this.cin ? this.cin["m2m:cin"].pi : null;
+      const ri = this.info ? this.info["m2m:cnt"].ri : null;
+      return this.cin ? this.cin["m2m:cin"].pi : ri;
     },
     hasPi() {
       const store = useMessageStore();
@@ -52,6 +54,27 @@ export default {
   },
 
   methods: {
+    fetchCONInfo() {
+      const options = {
+        method: "GET",
+        headers: {
+          "X-M2M-Origin": "CAdmin",
+          "X-M2M-RI": "123",
+          "X-M2M-RVI": "3",
+        },
+      };
+      fetch(`/acme${this.ae}/${this.con}`, options)
+        .then((response) => response.json())
+        .then((response) => {
+          if (response["m2m:cnt"] !== undefined) {
+            console.log(response);
+            this.info = response;
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     fetchCIN() {
       const options = {
         method: "GET",
@@ -67,13 +90,11 @@ export default {
           if (response["m2m:cin"] !== undefined) {
             this.cin = response;
           } else {
-            console.log(this.ae, "/", this.con);
-            console.log(response);
+            this.fetchCONInfo();
           }
         })
         .catch((err) => {
-          console.log(this.ae, "/", this.con);
-          console.error(err);
+          console.log("fetchCIN", err);
         });
     },
   },
